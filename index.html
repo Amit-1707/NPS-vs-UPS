@@ -6,7 +6,89 @@
   <title>UPS vs NPS Pension Calculator</title>
   <link rel="icon" href="favicon.ico">
   <meta name="description" content="Compare your pension benefits under India's Unified Pension Scheme (UPS) and National Pension System (NPS).">
-  <link rel="stylesheet" href="css/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.2/html2pdf.bundle.min.js"></script>
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #e0f7fa, #ffffff);
+      margin: 0;
+      padding: 0;
+      color: #333;
+    }
+    .container {
+      max-width: 900px;
+      margin: 50px auto;
+      padding: 40px;
+      background: #ffffff;
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+    h1 {
+      text-align: center;
+      color: #00796b;
+      margin-bottom: 30px;
+      font-weight: 600;
+    }
+    label {
+      display: block;
+      margin-top: 20px;
+      font-weight: 600;
+      color: #37474f;
+    }
+    input {
+      width: 100%;
+      padding: 12px;
+      margin-top: 8px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      box-sizing: border-box;
+    }
+    button {
+      margin-top: 30px;
+      padding: 12px 24px;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      background-color: #00796b;
+      color: white;
+      transition: background-color 0.3s;
+    }
+    button:hover {
+      background-color: #004d40;
+    }
+    .result {
+      margin-top: 40px;
+      background-color: #f1f8e9;
+      padding: 24px;
+      border-radius: 12px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 16px;
+    }
+    th, td {
+      padding: 12px 16px;
+      border-bottom: 1px solid #ccc;
+      text-align: left;
+    }
+    th {
+      background-color: #e0f2f1;
+    }
+    canvas {
+      margin-top: 30px;
+      width: 100% !important;
+      max-height: 400px;
+    }
+    @media (max-width: 600px) {
+      .container {
+        padding: 20px;
+      }
+    }
+  </style>
 </head>
 <body>
   <div class="container">
@@ -34,8 +116,61 @@
     <div class="result" id="results"></div>
     <canvas id="chartCanvas"></canvas>
   </div>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.2/html2pdf.bundle.min.js"></script>
-  <script src="js/calculator.js"></script>
+  <script>
+    let chartInstance = null;
+    function calculate() {
+      const basicPay = parseFloat(document.getElementById('basicPay').value);
+      const daPercent = parseFloat(document.getElementById('daPercent').value);
+      const increment = parseFloat(document.getElementById('increment').value) / 100;
+      const years = parseInt(document.getElementById('yearsService').value);
+      const npsCorpus = parseFloat(document.getElementById('npsCorpus').value);
+      const roi = parseFloat(document.getElementById('roi').value) / 100;
+      const annuityRate = parseFloat(document.getElementById('annuity').value) / 100;
+      const finalBasic = basicPay * Math.pow(1 + increment, years);
+      const avgBasic = finalBasic * (1 - 1 / Math.pow(1 + increment, years)) / (increment * years);
+      const upsPension = 0.5 * avgBasic;
+      const upsLump = 1344160;
+      const upsTotal = upsLump + upsPension * 12 * 20;
+      let totalCorpus = npsCorpus;
+      for (let i = 0; i < years; i++) {
+        const contribution = 0.10 * (basicPay * Math.pow(1 + increment, i)) * (1 + daPercent / 100);
+        totalCorpus += contribution * Math.pow(1 + roi, years - i);
+      }
+      const npsLump = 0.6 * totalCorpus;
+      const npsPension = 0.4 * totalCorpus * annuityRate / 12;
+      const npsTotal = npsLump + npsPension * 12 * 20;
+      document.getElementById('results').innerHTML = `
+        <h2>Results</h2>
+        <table>
+          <tr><th>Metric</th><th>UPS</th><th>NPS</th></tr>
+          <tr><td>Monthly Pension (₹)</td><td>${Math.round(upsPension)}</td><td>${Math.round(npsPension)}</td></tr>
+          <tr><td>Lump Sum (₹)</td><td>${upsLump}</td><td>${Math.round(npsLump)}</td></tr>
+          <tr><td>Total Benefit (20 yrs)</td><td>${Math.round(upsTotal)}</td><td>${Math.round(npsTotal)}</td></tr>
+        </table>
+      `;
+      const ctx = document.getElementById('chartCanvas').getContext('2d');
+      if (chartInstance) chartInstance.destroy();
+      chartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['Monthly Pension', 'Lump Sum', 'Total Benefit'],
+          datasets: [
+            { label: 'UPS', data: [Math.round(upsPension), upsLump, Math.round(upsTotal)], backgroundColor: '#00796b' },
+            { label: 'NPS', data: [Math.round(npsPension), Math.round(npsLump), Math.round(npsTotal)], backgroundColor: '#c2185b' }
+          ]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: { beginAtZero: true }
+          }
+        }
+      });
+    }
+    function exportPDF() {
+      const element = document.querySelector('.result');
+      html2pdf().from(element).save('UPS_vs_NPS_Result.pdf');
+    }
+  </script>
 </body>
 </html>
