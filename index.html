@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UPS vs NPS Pension Calculator</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="container">
+    <h1>UPS vs NPS Pension Calculator</h1>
+
+    <label>Current Basic Pay (₹):</label>
+    <input type="number" id="basicPay" value="50000">
+
+    <label>DA (% of Basic Pay):</label>
+    <input type="number" id="daPercent" value="50">
+
+    <label>Annual Increment Rate (%):</label>
+    <input type="number" id="increment" value="5">
+
+    <label>DA Growth Rate (%):</label>
+    <input type="number" id="daGrowth" value="3">
+
+    <label>Years of Service Remaining:</label>
+    <input type="number" id="yearsService" value="30">
+
+    <label>Existing NPS Corpus (₹):</label>
+    <input type="number" id="npsCorpus" value="2000000">
+
+    <label>NPS ROI (%):</label>
+    <input type="number" id="roi" value="8">
+
+    <label>Annuity Rate (%):</label>
+    <input type="number" id="annuity" value="6">
+
+    <button onclick="calculate()">Calculate</button>
+
+    <div class="result" id="results"></div>
+  </div>
+
+  <script src="js/calculator.js"></script>
+</body>
+</html>
